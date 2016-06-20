@@ -142,6 +142,16 @@ trait SolrFinna
     }
 
     /**
+     * Return education programs
+     *
+     * @return array
+     */
+    public function getEducationPrograms()
+    {
+        return [];
+    }
+
+    /**
      * Return genres
      *
      * @return array
@@ -186,6 +196,16 @@ trait SolrFinna
     }
 
     /**
+     * Get identifier
+     *
+     * @return array
+     */
+    public function getIdentifier()
+    {
+        return [];
+    }
+
+    /**
      * Return image rights.
      *
      * @param string $language Language
@@ -199,6 +219,16 @@ trait SolrFinna
     public function getImageRights($language)
     {
         return false;
+    }
+
+    /**
+     * Return keywords
+     *
+     * @return array
+     */
+    public function getKeywords()
+    {
+        return [];
     }
 
     /**
