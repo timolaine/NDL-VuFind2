@@ -1,0 +1,21 @@
+<!-- START of: finna - content/street_search_fi.phtml -->
+<? $this->headTitle($this->translate('Katuhaku'));
+   $this->content()->setHeading($this->translate('Katuhaku'));
+   $this->headScript()->appendFile('finna-street-search.js', 'text/javascript', '');
+      
+?>
+<div class="row">
+ <div class="col-md-10 col-lg-8">
+   <p>
+     <span class="btn btn-primary" id="street-search-button">
+      Hae kuvia läheltäsi.
+     </span>
+   </p>
+   <p>
+     Kun annat Finnalle luvan kysyä selaimeltasi koordinaattejasi, pääset yhtä
+     nappia painamalla katsomaan valokuvia, jotka on otettu lähellä sijaintiasi. Haku
+     perustuu kadunnimeen.
+   </p>
+ </div>
+</div>
+<!-- END of: finna - content/street_search_fi.phtml -->
