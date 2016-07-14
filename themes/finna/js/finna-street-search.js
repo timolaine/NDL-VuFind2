@@ -28,9 +28,9 @@ finna.StreetSearch = (function() {
         
         searchterm = encodeURIComponent(street + ' ' + city);
         
-        window.location.replace(VuFind.path + '/Search/Results?lookfor=' +
+        window.location.href = VuFind.path + '/Search/Results?lookfor=' +
                                  searchterm +
-                                 '&type=AllFields&limit=100&filter%5B%5D=%7Eformat%3A%220%2FImage%2F%22&filter%5B%5D=online_boolean%3A%221%22&view=grid')
+                                 '&type=AllFields&limit=100&filter%5B%5D=%7Eformat%3A%220%2FImage%2F%22&filter%5B%5D=online_boolean%3A%221%22&view=grid';
 
     }
 
