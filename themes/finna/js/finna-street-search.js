@@ -1,30 +1,48 @@
 finna.StreetSearch = (function() {
-    var getLocation = function() {
+    var doStreetSearch = function() {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError);
+            navigator.geolocation.getCurrentPosition(buildSearch, geoLocationError);
         } else { 
             geoLocationError();
         }
     }
     
-    var geoLocationError = function() {
-        alert("Geolocation is inactive in your settings or not supported by this browser.");
+    var geoLocationError = function(error) {
+        errorString = VuFind.translate('street_search_geolocation_unsupported');
+        if (error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorString = VuFind.translate('street_search_geolocation_inactive');
+                    break;
+            }
+        }
+        this.ssbutton.parent().append('<br />' + errorString);
     }
-    
+
     var reverseGeocode = function(position) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", "https://nominatim.openstreetmap.org/reverse?format=json&lat=" +
+        
+        xhr.open("GET", "http://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
                         position.coords.latitude +
-                        "&lon=" +
+                        "&point.lon=" +
                         position.coords.longitude +
-                        "&zoom=18&addressdetails=1",
+                        "&size=1",
                 false);
         xhr.send();
 
         obj = JSON.parse(xhr.responseText);
         
-        street = obj.address.road;
-        city = obj.address.city;
+        return {
+            street : obj.features[0].properties.street,
+            city : obj.features[0].properties.locality
+        }
+    }
+  
+    var buildSearch = function(position) {
+        address = reverseGeocode(position);
+        
+        street = address.street;
+        city = address.city;
         
         searchterm = encodeURIComponent(street + ' ' + city);
         
@@ -40,11 +58,9 @@ finna.StreetSearch = (function() {
     var my = {
         init: function() {
             window.onload = function() {
-                var ssbutton = document.getElementById("street-search-button");
+                this.ssbutton = $("#street-search-button");
 
-                ssbutton.onclick = function() {
-                    getLocation();
-                }
+                this.ssbutton.click(function() { doStreetSearch() });
             }
         }
     };

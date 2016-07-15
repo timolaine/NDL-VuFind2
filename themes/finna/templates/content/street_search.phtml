@@ -1,0 +1,27 @@
+<!-- START of: finna - content/street_search_fi.phtml -->
+<?
+    $this->headTitle($this->translate('street_search'));
+    $this->content()->setHeading($this->translate('street_search'));
+    $this->headScript()->appendFile('finna-street-search.js', 'text/javascript', '');
+   
+    $this->jsTranslations()->addStrings(
+      array(
+        'street_search_geolocation_unsupported' => 'street_search_geolocation_unsupported',
+        'street_search_geolocation_inactive' => 'street_search_geolocation_inactive',
+      )
+    );
+      
+?>
+<div class="row">
+ <div class="col-md-10 col-lg-8">
+   <p>
+     <span class="btn btn-primary" id="street-search-button">
+      <?=$this->transEsc('street_search_button')?>
+     </span>
+   </p> 
+   <p>
+     <?=$this->transEsc('street_search_info')?>
+   </p>
+ </div>
+</div>
+<!-- END of: finna - content/street_search_fi.phtml -->
