@@ -30,7 +30,10 @@ finna.StreetSearch = (function() {
         
         window.location.href = VuFind.path + '/Search/Results?lookfor=' +
                                  searchterm +
-                                 '&type=AllFields&limit=100&filter%5B%5D=%7Eformat%3A%220%2FImage%2F%22&filter%5B%5D=online_boolean%3A%221%22&view=grid';
+                                 '&type=AllFields&limit=100&view=grid' +
+                                 '&filter[]=~format%3A"0%2FImage%2F"' +
+                                 '&filter[]=~format%3A"0%2FPlace%2F"' +
+                                 '&filter%5B%5D=online_boolean%3A%221%22';
 
     }
 
