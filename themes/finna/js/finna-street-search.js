@@ -22,7 +22,7 @@ finna.StreetSearch = (function() {
     var reverseGeocode = function(position) {
         var xhr = new XMLHttpRequest();
         
-        xhr.open("GET", "http://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
+        xhr.open("GET", "https://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
                         position.coords.latitude +
                         "&point.lon=" +
                         position.coords.longitude +
