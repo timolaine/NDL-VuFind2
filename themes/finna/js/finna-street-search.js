@@ -1,25 +1,28 @@
 finna.StreetSearch = (function() {
     var doStreetSearch = function() {
+        my.outputBox.html('');
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(buildSearch, geoLocationError);
+            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError);
         } else { 
             geoLocationError();
         }
     }
     
     var geoLocationError = function(error) {
-        errorString = VuFind.translate('street_search_geolocation_unsupported');
+        errorString = 'street_search_geolocation_unsupported';
         if (error) {
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    errorString = VuFind.translate('street_search_geolocation_inactive');
+                    errorString = 'street_search_geolocation_inactive';
                     break;
             }
         }
-        this.ssbutton.parent().append('<br />' + errorString);
+        my.outputBox.prepend($('<li>').text(VuFind.translate('errorString')));
     }
 
     var reverseGeocode = function(position) {
+        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_coordinates_found')));
+      
         var xhr = new XMLHttpRequest();
         
         xhr.open("GET", "https://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
@@ -27,23 +30,33 @@ finna.StreetSearch = (function() {
                         "&point.lon=" +
                         position.coords.longitude +
                         "&size=1",
-                false);
-        xhr.send();
+                true);
+                
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    obj = JSON.parse(xhr.responseText);
 
-        obj = JSON.parse(xhr.responseText);
-        
-        return {
-            street : obj.features[0].properties.street,
-            city : obj.features[0].properties.locality
+                    if(obj.features[0] && (street = obj.features[0].properties.street) &&
+                       (city = obj.features[0].properties.locality)) {
+                        buildSearch(street, city);
+                    } else {
+                        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_no_streetname_found')));
+                    }
+                } else {
+                    my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_reversegeocode_unavailable')));
+                }
+            }
         }
+                
+        xhr.send();
     }
   
-    var buildSearch = function(position) {
-        address = reverseGeocode(position);
-        
-        street = address.street;
-        city = address.city;
-        
+    var buildSearch = function(street, city) {
+
+        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_searching_for') +
+                                             ' ' + street + ' ' + city));
+      
         searchterm = encodeURIComponent(street + ' ' + city);
         
         window.location.href = VuFind.path + '/Search/Results?lookfor=' +
@@ -58,9 +71,10 @@ finna.StreetSearch = (function() {
     var my = {
         init: function() {
             window.onload = function() {
-                this.ssbutton = $("#street-search-button");
+                my.ssbutton = $("#street-search-button");
+                my.outputBox = $("#street-search-output");
 
-                this.ssbutton.click(function() { doStreetSearch() });
+                my.ssbutton.click(function() { doStreetSearch() });
             }
         }
     };
