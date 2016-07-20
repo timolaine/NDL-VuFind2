@@ -1,37 +1,45 @@
 finna.StreetSearch = (function() {
     var doStreetSearch = function() {
-        my.outputBox.html('');
+        ssInfo(VuFind.translate('street_search_checking_for_geolocation'), true);
+
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError);
-        } else { 
+            ssInfo(VuFind.translate('street_search_geolocation_available'));
+            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError, { timeout: 30000 });
+        } else {
             geoLocationError();
         }
     }
-    
+   
     var geoLocationError = function(error) {
-        errorString = 'street_search_geolocation_unsupported';
+        errorString = 'street_search_other_error';
         if (error) {
             switch(error.code) {
                 case error.PERMISSION_DENIED:
                     errorString = 'street_search_geolocation_inactive';
                     break;
+                case error.TIMEOUT:
+                    errorString = 'street_search_timeout';
+                    break;
+                default:
+                    // do nothing
+                    break;
             }
         }
-        my.outputBox.prepend($('<li>').text(VuFind.translate('errorString')));
+        ssInfo(VuFind.translate(errorString));
     }
 
     var reverseGeocode = function(position) {
-        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_coordinates_found')));
-      
+        ssInfo(VuFind.translate('street_search_coordinates_found'));
+
         var xhr = new XMLHttpRequest();
-        
+
         xhr.open("GET", "https://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
                         position.coords.latitude +
                         "&point.lon=" +
                         position.coords.longitude +
                         "&size=1",
                 true);
-                
+
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
                 if (xhr.status == 200) {
@@ -41,24 +49,23 @@ finna.StreetSearch = (function() {
                        (city = obj.features[0].properties.locality)) {
                         buildSearch(street, city);
                     } else {
-                        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_no_streetname_found')));
+                        ssInfo(VuFind.translate('street_search_no_streetname_found'));
                     }
                 } else {
-                    my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_reversegeocode_unavailable')));
+                    ssInfo(VuFind.translate('street_search_reversegeocode_unavailable'));
                 }
             }
         }
-                
+
         xhr.send();
     }
-  
+ 
     var buildSearch = function(street, city) {
 
-        my.outputBox.prepend($('<li>').text(VuFind.translate('street_search_searching_for') +
-                                             ' ' + street + ' ' + city));
-      
+        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city);
+
         searchterm = encodeURIComponent(street + ' ' + city);
-        
+
         window.location.href = VuFind.path + '/Search/Results?lookfor=' +
                                  searchterm +
                                  '&type=AllFields&limit=100&view=grid' +
@@ -67,6 +74,14 @@ finna.StreetSearch = (function() {
                                  '&filter%5B%5D=online_boolean%3A%221%22';
 
     }
+
+    var ssInfo = function(message, clear) {
+        if (typeof clear !== 'undefined') {
+            my.outputBox.html('');
+        }
+        my.outputBox.append($('<li>').text(message));
+    }
+
 
     var my = {
         init: function() {
