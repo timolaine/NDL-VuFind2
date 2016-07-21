@@ -4999,6 +4999,12 @@ button.multiselect {
   padding: 10px 30px;
   margin-bottom: 80px;
 }
+#street-search-button:after {
+  content: "\e008";
+  -moz-osx-font-smoothing: grayscale;
+  font-family: icomoon;
+  margin-left: 11px;
+}
 .btn-default {
   color: #333;
   background-color: #fff;
@@ -14013,6 +14019,9 @@ body {
   body .main .searchtools-background {
     margin-left: -15px;
   }
+}
+body.streetsearch {
+  background-image: url('../../finna/images/streetsearchbg');
 }
 body > .main {
   background: #fff;

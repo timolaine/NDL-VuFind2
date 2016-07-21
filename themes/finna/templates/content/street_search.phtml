@@ -3,6 +3,7 @@
     $this->headTitle($this->translate('street_search'));
     $this->content()->setHeading = false;
     $this->layout()->finnaMainHeader = false;
+    $this->body()->appendClass('streetsearch');
 
     $introText = '<div class="introduction"><h1 class="introductionText">' . $this->translate('street_search_header') . '</h1></div>';
     $button = '<div><span class="btn btn-primary" id="street-search-button">' . $this->transEsc('street_search_button') . '</span></div>';
