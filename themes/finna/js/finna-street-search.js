@@ -1,35 +1,42 @@
 finna.StreetSearch = (function() {
+    var ssbutton, outputBox, buttonArea, spinner, spinnerContainer, getPositionSuccess;
+    
     var doStreetSearch = function() {
-        ssInfo(VuFind.translate('street_search_checking_for_geolocation'), true);
+        ssInfo(VuFind.translate('street_search_checking_for_geolocation'), 'success');
 
         if (navigator.geolocation) {
-            ssInfo(VuFind.translate('street_search_geolocation_available'));
-            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError, { timeout: 30000 });
+            ssInfo(VuFind.translate('street_search_geolocation_available'), 'success');
+            navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError, { timeout: 10000, maximumAge: 10000 });
         } else {
             geoLocationError();
         }
     }
    
     var geoLocationError = function(error) {
-        errorString = 'street_search_other_error';
-        if (error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorString = 'street_search_geolocation_inactive';
-                    break;
-                case error.TIMEOUT:
-                    errorString = 'street_search_timeout';
-                    break;
-                default:
-                    // do nothing
-                    break;
+        if (!getPositionSuccess) {
+            errorString = 'street_search_other_error';
+            if (error) {
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorString = 'street_search_geolocation_inactive';
+                        break;
+                    case error.TIMEOUT:
+                        errorString = 'street_search_timeout';
+                        break;
+                    default:
+                        // do nothing
+                        break;
+                }
             }
+            ssInfo(VuFind.translate(errorString), 'warning');
         }
-        ssInfo(VuFind.translate(errorString));
     }
 
     var reverseGeocode = function(position) {
-        ssInfo(VuFind.translate('street_search_coordinates_found'));
+        getPositionSuccess = true;
+        ssbutton.hide();
+
+        ssInfo(VuFind.translate('street_search_coordinates_found'), 'success');
 
         var xhr = new XMLHttpRequest();
 
@@ -49,10 +56,10 @@ finna.StreetSearch = (function() {
                        (city = obj.features[0].properties.locality)) {
                         buildSearch(street, city);
                     } else {
-                        ssInfo(VuFind.translate('street_search_no_streetname_found'));
+                        ssInfo(VuFind.translate('street_search_no_streetname_found'), 'warning');
                     }
                 } else {
-                    ssInfo(VuFind.translate('street_search_reversegeocode_unavailable'));
+                    ssInfo(VuFind.translate('street_search_reversegeocode_unavailable'), 'warning');
                 }
             }
         }
@@ -61,8 +68,8 @@ finna.StreetSearch = (function() {
     }
  
     var buildSearch = function(street, city) {
-
-        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city);
+      
+        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city, 'success');
 
         searchterm = encodeURIComponent(street + ' ' + city);
 
@@ -75,26 +82,42 @@ finna.StreetSearch = (function() {
 
     }
 
-    var ssInfo = function(message, clear) {
-        if (typeof clear !== 'undefined') {
-            my.outputBox.html('');
+    var ssInfo = function(message, type) {
+        spinnerContainer.removeClass('alert-success').removeClass('alert-warning');
+        
+        if (type) {
+            spinnerContainer.addClass('alert-' + type);
+            
+            if (type === 'warning') {
+                spinnerContainer.find('.fa-spinner').hide();
+                ssbutton.show();
+            }
         }
-        my.outputBox.append($('<li>').text(message));
+        spinnerContainer.find('.info').text(message);
+        
     }
 
 
     var my = {
         init: function() {
-            window.onload = function() {
-                my.ssbutton = $("#street-search-button");
-                my.outputBox = $("#street-search-output");
+            getPositionSuccess = false;
+            
+            ssbutton = $("#street-search-button");
+            buttonArea = $("#ssButtonArea");
+            spinnerContainer = $('<div/>').attr('id', 'spinner').addClass('alert alert-success').
+                               append($('<span/>').addClass('fa fa-spinner fa-spin')).
+                               append($('<span/>').addClass('info'));
 
-                my.ssbutton.click(function() { doStreetSearch() });
-            }
+            ssbutton.click(function() {
+                buttonArea.append(spinnerContainer);
+                doStreetSearch();
+            });
         }
     };
 
     return my;
 })(finna);
 
-finna['StreetSearch'].init();
+$(document).ready(function() {
+    finna['StreetSearch'].init();
+});
