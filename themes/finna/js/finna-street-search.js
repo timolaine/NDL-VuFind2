@@ -1,11 +1,12 @@
 finna.StreetSearch = (function() {
-    var ssbutton, outputBox, buttonArea, spinner, spinnerContainer, getPositionSuccess;
+    var ssbutton, terminateButton, buttonArea, spinner, spinnerContainer,
+        getPositionSuccess;
     
     var doStreetSearch = function() {
-        ssInfo(VuFind.translate('street_search_checking_for_geolocation'), 'success');
+        ssInfo(VuFind.translate('street_search_checking_for_geolocation'), 'continues');
 
         if (navigator.geolocation) {
-            ssInfo(VuFind.translate('street_search_geolocation_available'), 'success');
+            ssInfo(VuFind.translate('street_search_geolocation_available'), 'continues');
             navigator.geolocation.getCurrentPosition(reverseGeocode, geoLocationError, { timeout: 10000, maximumAge: 10000 });
         } else {
             geoLocationError();
@@ -28,69 +29,67 @@ finna.StreetSearch = (function() {
                         break;
                 }
             }
-            ssInfo(VuFind.translate(errorString), 'warning');
+            ssInfo(VuFind.translate(errorString), 'stopped');
         }
     }
 
     var reverseGeocode = function(position) {
         getPositionSuccess = true;
-        ssbutton.hide();
 
-        ssInfo(VuFind.translate('street_search_coordinates_found'), 'success');
+        ssInfo(VuFind.translate('street_search_coordinates_found'), 'continues');
 
-        var xhr = new XMLHttpRequest();
+        reverseGeocodeService = 'https://api.digitransit.fi/geocoding/v1/reverse';
 
-        xhr.open("GET", "https://api.digitransit.fi/geocoding/v1/reverse?point.lat=" +
-                        position.coords.latitude +
-                        "&point.lon=" +
-                        position.coords.longitude +
-                        "&size=1",
-                true);
+        queryParameters = {
+            'point.lat' : position.coords.latitude,
+            'point.lon' : position.coords.longitude,
+            'size' : '1'
+        };
+        
+        url = reverseGeocodeService + '?' + $.param(queryParameters);
 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200) {
-                    obj = JSON.parse(xhr.responseText);
-
-                    if(obj.features[0] && (street = obj.features[0].properties.street) &&
-                       (city = obj.features[0].properties.locality)) {
-                        buildSearch(street, city);
-                    } else {
-                        ssInfo(VuFind.translate('street_search_no_streetname_found'), 'warning');
-                    }
-                } else {
-                    ssInfo(VuFind.translate('street_search_reversegeocode_unavailable'), 'warning');
-                }
+        $.ajax({
+            method: "GET",
+            dataType: "json",
+            url: url
+        })
+        .done(function(data) {
+            if(data.features[0] && (street = data.features[0].properties.street) &&
+               (city = data.features[0].properties.locality)) {
+                buildSearch(street, city);
+            } else {
+                ssInfo(VuFind.translate('street_search_no_streetname_found'), 'stopped');
             }
-        }
-
-        xhr.send();
+        })
+        .fail(function() {
+            ssInfo(VuFind.translate('street_search_reversegeocode_unavailable'), 'stopped');          
+        });
+      
     }
  
     var buildSearch = function(street, city) {
       
-        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city, 'success');
+        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city, 'stopped');
 
         searchterm = encodeURIComponent(street + ' ' + city);
 
-        window.location.href = VuFind.path + '/Search/Results?lookfor=' +
-                                 searchterm +
-                                 '&type=AllFields&limit=100&view=grid' +
-                                 '&filter[]=~format%3A"0%2FImage%2F"' +
-                                 '&filter[]=~format%3A"0%2FPlace%2F"' +
-                                 '&filter%5B%5D=online_boolean%3A%221%22';
+        if (!terminate) {
+            window.location.href = VuFind.path + '/Search/Results?lookfor=' +
+                                     searchterm +
+                                     '&type=AllFields&limit=100&view=grid' +
+                                     '&filter[]=~format%3A"0%2FImage%2F"' +
+                                     '&filter[]=~format%3A"0%2FPlace%2F"' +
+                                     '&filter%5B%5D=online_boolean%3A%221%22';
+        }
 
     }
 
     var ssInfo = function(message, type) {
-        spinnerContainer.removeClass('alert-success').removeClass('alert-warning');
         
         if (type) {
-            spinnerContainer.addClass('alert-' + type);
-            
-            if (type === 'warning') {
+            if (type === 'stopped') {
                 spinnerContainer.find('.fa-spinner').hide();
-                ssbutton.show();
+                terminateButton.hide();
             }
         }
         spinnerContainer.find('.info').text(message);
@@ -103,14 +102,31 @@ finna.StreetSearch = (function() {
             getPositionSuccess = false;
             
             ssbutton = $("#street-search-button");
-            buttonArea = $("#ssButtonArea");
-            spinnerContainer = $('<div/>').attr('id', 'spinner').addClass('alert alert-success').
-                               append($('<span/>').addClass('fa fa-spinner fa-spin')).
-                               append($('<span/>').addClass('info'));
+            buttonArea = $("#street-search-button-area");
+            terminate = false;
+            terminateButton = $('<button/>').attr('id', 'street-search-terminate').text(VuFind.translate('Abort'));
+            infoText = $('<div/>').addClass('info');
+            infoArea = $('<div/>').append(infoText).
+                      append(terminateButton);
+            infoBox = $('<div/>').addClass('infoBox').append(infoArea);
+            spinnerContainer = $('<div/>').attr('id', 'street-search-spinner').hide().
+                               addClass('alert alert-info').
+                               append($('<div/>').addClass('fa fa-spinner fa-spin')).
+                               append(infoBox);
+            buttonArea.append(spinnerContainer);
 
             ssbutton.click(function() {
-                buttonArea.append(spinnerContainer);
+                spinnerContainer.show();
+                spinnerContainer.find('.fa-spinner').show();
+                terminate = false;
+                terminateButton.show();
                 doStreetSearch();
+            });
+
+            terminateButton.click(function() {
+                terminate = true;
+                terminateButton.hide();
+                spinnerContainer.hide();
             });
         }
     };
