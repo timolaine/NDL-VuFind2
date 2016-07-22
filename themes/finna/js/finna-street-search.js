@@ -68,20 +68,27 @@ finna.StreetSearch = (function() {
     }
  
     var buildSearch = function(street, city) {
-      
-        ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city, 'stopped');
-
-        searchterm = encodeURIComponent(street + ' ' + city);
-
         if (!terminate) {
-            window.location.href = VuFind.path + '/Search/Results?lookfor=' +
-                                     searchterm +
-                                     '&type=AllFields&limit=100&view=grid' +
-                                     '&filter[]=~format%3A"0%2FImage%2F"' +
-                                     '&filter[]=~format%3A"0%2FPlace%2F"' +
-                                     '&filter%5B%5D=online_boolean%3A%221%22';
-        }
+            ssInfo(VuFind.translate('street_search_searching_for') + ' ' + street + ' ' + city, 'stopped');
 
+            resultsUrl = VuFind.path + '/Search/Results';
+            
+            queryParameters = {
+                'lookfor' : street + ' ' + city,
+                'type' : 'AllFields',
+                'limit' : '100',
+                'view' : 'grid',
+                'filter' : [
+                    '~format:"0/Image/"',
+                    '~format:"0/Place/"',
+                    'online_boolean:"1"'
+                ]
+            };
+        
+            url = resultsUrl + '?' + $.param(queryParameters);
+            
+            window.location.href = url;
+        }
     }
 
     var ssInfo = function(message, type) {
